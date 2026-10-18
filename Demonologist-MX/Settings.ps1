@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('Menu','SoftwareLumen','LumenOff','Restore','RestoreOriginal','Diagnose','Snapshot','Compare')][string]$Action = 'Menu',
+    [ValidateSet('Menu','SoftwareLumen','LumenOff','Restore','RestoreOriginal','Diagnose','Snapshot','Compare','LightingTest')][string]$Action = 'Menu',
     [string]$ConfigPath
 )
 $ErrorActionPreference = 'Stop'
@@ -42,8 +42,18 @@ function Read-Ini([string]$Path) {
     return ''
 }
 
+function Remove-IniKeys([string]$Text, [string]$Section, [string[]]$Keys) {
+    $inside = $false
+    $lines = foreach ($line in ($Text -split '\r?\n')) {
+        if ($line -match '^\s*\[([^\]]+)\]\s*$') { $inside = $Matches[1] -ieq $Section }
+        if ($inside -and $line -match '^\s*([^;#=]+?)\s*=' -and $Matches[1].Trim() -in $Keys) { continue }
+        $line
+    }
+    return ($lines -join "`r`n")
+}
+
 try {
-    Write-Host 'Demonologist MX settings helper v1.2 - experimental, reversible' -ForegroundColor Cyan
+    Write-Host 'Demonologist MX settings helper v1.3 - experimental, reversible' -ForegroundColor Cyan
     Write-Host 'Close the game before applying or restoring. No administrator rights needed.'
     Write-Host 'MX130 2 GB: no verified lighting fix. For dark rooms after tweaks, use 4 first.' -ForegroundColor Yellow
 
@@ -78,6 +88,7 @@ try {
         Write-Host '5 - Save a local diagnostic report (no settings changes)'
         Write-Host '6 - Record current files BEFORE launching the game'
         Write-Host '7 - Check whether files changed AFTER launching the game'
+        Write-Host '8 - Test corrected Lumen settings + config-section saving (experimental)'
         Write-Host 'Q - Exit'
         switch (Read-Host 'Choose') {
             '1' { $Action = 'SoftwareLumen' }
@@ -87,6 +98,7 @@ try {
             '5' { $Action = 'Diagnose' }
             '6' { $Action = 'Snapshot' }
             '7' { $Action = 'Compare' }
+            '8' { $Action = 'LightingTest' }
             default { exit 0 }
         }
     }
@@ -136,7 +148,7 @@ try {
     }
     if ($Action -eq 'Diagnose') {
         $report = [System.Collections.Generic.List[string]]::new()
-        $report.Add('Demonologist helper v1.2 diagnostics - ' + (Get-Date -Format s))
+        $report.Add('Demonologist helper v1.3 diagnostics - ' + (Get-Date -Format s))
         $report.Add('This report cannot confirm working Lumen or diagnose darkness from hardware alone.')
         $report.Add('Detected display adapters (presence does not prove the game uses this adapter):')
         try {
@@ -149,7 +161,8 @@ try {
             if (Test-Path -LiteralPath $file) {
                 $report.Add('  Modified: ' + (Get-Item -LiteralPath $file).LastWriteTime.ToString('s'))
                 foreach ($line in ((Read-Ini $file) -split '\r?\n')) {
-                    if ($line -match '^\s*(sg\.[\w.]+|r\.(Lumen[\w.]*|DynamicGlobalIlluminationMethod|RayTracing[\w.]*|ScreenPercentage)|t\.MaxFPS|ResolutionSize[XY]|FullscreenMode)\s*=\s*[-\w.]+\s*$') {
+                    if ($line -match '^\s*\[(SystemSettings|ScalabilityGroups|SectionsToSave|/Script/Engine.GameUserSettings|/Script/Engine.RendererSettings)\]\s*$' -or
+                        $line -match '^\s*(bCanSaveAllSections|sg\.[\w.]+|r\.(Lumen[\w.]*|DynamicGlobalIlluminationMethod|RayTracing[\w.]*|ScreenPercentage)|t\.MaxFPS|ResolutionSize[XY]|FullscreenMode)\s*=\s*[-\w.]+\s*$') {
                         $report.Add('  ' + $line.Trim())
                     }
                 }
@@ -176,7 +189,7 @@ try {
     if (@(Get-Process -ErrorAction SilentlyContinue | Where-Object {
         $_.ProcessName -match '^(Demonologist|Shivers)(-|$)'
     }).Count -gt 0) { throw 'The game appears to be running. Close it and try again.' }
-    if ($Action -in @('SoftwareLumen','LumenOff') -and -not (Test-Path -LiteralPath $userFile -PathType Leaf)) {
+    if ($Action -in @('SoftwareLumen','LumenOff','LightingTest') -and -not (Test-Path -LiteralPath $userFile -PathType Leaf)) {
         throw 'GameUserSettings.ini was not found. Launch the game once, exit, and try again.'
     }
     foreach ($file in @($userFile,$engineFile)) {
@@ -228,6 +241,30 @@ try {
 
     $userText = Read-Ini $userFile
     $engineText = Read-Ini $engineFile
+    if ($Action -eq 'LightingTest') {
+        # These engine CVars are not normally read from GameUserSettings.ini.
+        # Remove only the matching keys there; preserve other sections/settings.
+        $lighting = [ordered]@{
+            'r.DynamicGlobalIlluminationMethod'='1'
+            'r.Lumen.HardwareRayTracing'='0'
+            'r.Lumen.DiffuseIndirect.Allow'='1'
+            'r.Lumen.Reflections.Allow'='0'
+            'sg.GlobalIlluminationQuality'='2'
+            'r.ScreenPercentage'='70'
+            't.MaxFPS'='30'
+        }
+        $oldKeys = @($lighting.Keys) + @('r.Lumen.Reflections.HardwareRayTracing',
+            'r.Lumen.Radiosity.HardwareRayTracing','r.Lumen.SoftwareRayTracingMode')
+        $userText = Remove-IniKeys $userText 'SystemSettings' $oldKeys
+        $userText = Set-IniValues $userText 'ScalabilityGroups' ([ordered]@{
+            'sg.GlobalIlluminationQuality'='2'; 'sg.ReflectionQuality'='0'
+        })
+        $engineText = Set-IniValues $engineText 'SystemSettings' $lighting
+        # Engine versions differ in section saving. This is a persistence test,
+        # not proof that this shipping build will retain or honor the overrides.
+        $engineText = Set-IniValues $engineText 'SectionsToSave' ([ordered]@{'bCanSaveAllSections'='True'})
+        $userText = Set-IniValues $userText 'SectionsToSave' ([ordered]@{'bCanSaveAllSections'='True'})
+    } else {
     $gi = if ($Action -eq 'SoftwareLumen') { '2' } else { '0' }
     $allowGI = if ($Action -eq 'SoftwareLumen') { '1' } else { '0' }
     $scalability = [ordered]@{
@@ -241,6 +278,7 @@ try {
         'r.Lumen.HardwareRayTracing'='0'; 'r.Lumen.DiffuseIndirect.Allow'=$allowGI
         'r.Lumen.Reflections.Allow'='0'; 'r.ScreenPercentage'='70'; 't.MaxFPS'='30'
     })
+    }
 
     $backup = Join-Path $backupRoot ((Get-Date -Format 'yyyyMMdd-HHmmss-fff') + '-' + [guid]::NewGuid().ToString('N').Substring(0,8))
     New-Item -ItemType Directory -Path $backup -Force | Out-Null
@@ -264,6 +302,11 @@ try {
         throw
     }
     Write-Host "Applied $Action. Backup: $backup" -ForegroundColor Green
+    if ($Action -eq 'LightingTest') {
+        Write-Host 'Corrected settings written. This does NOT confirm working lighting on MX130.'
+        Write-Host 'Choose 6 before launch, then 7 after launch and exit to check persistence.'
+        Write-Host 'No file locks were set. Your resolution and other quality groups were preserved.'
+    }
     Write-Host 'Launch through Steam normally. Test the same room before and after.'
     Write-Host 'Try 1280 x 720 in the game menu if performance remains poor.'
     Write-Host 'Software Lumen needs game-provided distance fields and compatible hardware.'

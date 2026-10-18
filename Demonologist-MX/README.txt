@@ -1,5 +1,20 @@
 DEMONOLOGIST MX SETTINGS HELPER
 
+VERSION 1.3 - CORRECTED LIGHTING CONFIGURATION TEST (OPTION 8)
+For dark rooms where Engine.ini has no lighting overrides but SystemSettings
+overrides were placed in GameUserSettings.ini, close the game and choose 8.
+It backs up both files and moves the relevant lighting requests to Engine.ini.
+It requests Lumen GI, software tracing, High GI, disabled Lumen reflections,
+70 percent render scale and a 30 FPS cap. Other quality groups and resolution
+are preserved. This may be slower than running with Lumen off.
+It adds [SectionsToSave] bCanSaveAllSections=True to test whether Unreal retains
+these sections when saving. This is not a file lock and may not be honored by
+this game build. Steam Cloud and file permissions are not changed.
+After 8, choose 6, launch the game, test lighting, exit, then choose 7 and 5.
+Choose 3 to undo the most recent application. Do not use option 2 for dark rooms.
+File placement and restoration are tested; actual game lighting and persistence
+on MX130 remain unverified. Saved settings alone do not prove Lumen works.
+
 VERSION 1.2 - CHECK FOR FILE DELETION / REWRITES
 Close the game and choose 6 to record the current INI file contents by hash.
 Launch the game, then run the helper and choose 7 while the game is still open.

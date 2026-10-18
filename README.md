@@ -10,6 +10,36 @@ graphics card.
 
 ## MX130 2 GB: dark rooms after applying profiles
 
+### v1.3: test misplaced or disappearing lighting overrides
+
+Option **8** is a focused configuration test for files where `Engine.ini` lacks
+lighting overrides but they have been placed under `[SystemSettings]` in
+`GameUserSettings.ini`. It backs up both files, removes the matching misplaced
+entries, and writes supported Lumen requests under `[SystemSettings]` in
+`Engine.ini`. It requests Lumen GI, software tracing, High GI scalability,
+disabled Lumen reflections, 70% render scale and a 30 FPS cap. Resolution and
+other quality groups are preserved. This can cost more GPU time than Lumen off.
+
+It also adds `[SectionsToSave] bCanSaveAllSections=True` to both files to test
+Unreal's section-saving behavior. Whether this works in the game's particular
+shipping build must be checked after launch and exit. It does not lock files,
+change permissions, disable Steam Cloud or prove that Steam caused a rewrite.
+
+Close the game, choose **8**, then **6** before launching. After playing and
+exiting, choose **7** and **5**. Option **3** undoes the most recent application.
+Persistence and lighting are separate checks: a retained setting can still be
+ignored or unsupported. A helper success message confirms file writes only.
+Do not use option 2 to repair dark rooms.
+
+The code is tested for correct file placement, preservation, repeat application
+and exact restoration. Actual lighting and persistence in Demonologist on MX130
+remain unverified.
+
+References: [Epic config-file API](https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Runtime/Core/FConfigFile)
+and [Epic support discussion of saved config sections](https://forums.unrealengine.com/t/best-way-to-handle-different-plugin-that-handle-swapchain/2668193).
+
+### Hardware and recovery
+
 There is **no verified permanent lighting fix for the MX130** in this project.
 Do not use Lumen off as a repair for dark rooms. It can remove the indirect
 lighting those rooms need. The current Epic documentation lists a GTX 1070 or
