@@ -1,8 +1,28 @@
 DEMONOLOGIST MX SETTINGS HELPER
 
+VERSION 1.1 - MX130 DARK-ROOM RECOVERY
+There is no verified permanent lighting fix for the MX130 2 GB in this tool.
+Do not use option 2 to fix dark rooms: disabling Lumen can remove needed lighting.
+If previous profiles made lighting worse, close the game and choose 4.
+Option 4 restores the EARLIEST available helper backup, even after repeated
+profile changes. It is not necessarily factory defaults or working lighting.
+Before restoring, the tool saves current files in MX-Recovery-Snapshots.
+Record then remove custom Steam launch options and test the default renderer.
+If still dark, choose 5 after a test launch and share the generated diagnostic
+text file, game version, prior launch options, and whether a flashlight lights
+nearby walls. The report is saved in the game config folder; nothing is uploaded.
+It records adapters, selected graphics settings, and available renderer log lines.
+Installed adapter names do not prove which GPU the game actually used.
+
+Epic's current software Lumen documentation lists GTX 1070 or higher, and the
+game lists GTX 1060 6 GB minimum. MX130 is below these supported targets.
+A permanent solution may require a developer-provided lighting fallback or
+a computer that meets the requirements. INI changes cannot create missing light
+maps, add GPU capabilities, or guarantee that this game honors the overrides.
+
 Extract the whole ZIP to a folder on your friend's Windows PC.
 Launch Demonologist once, then fully exit it. Double-click Run.cmd.
-Choose 1 first. Launch the game from Steam normally afterward.
+For MX130 darkness after tweaks, choose 4 first. Launch through Steam afterward.
 The helper needs no installation, internet, or administrator access.
 Run.cmd uses Windows PowerShell with execution policy bypass for this process
 only; it does not change the machine's execution policy.
@@ -17,6 +37,8 @@ WHAT IT DOES
 3: Restores both INI files from before the most recent application. Repeating
    Restore restores that same backup; it does not walk backward through history.
    Older backups remain in MX-Settings-Backups inside the config folder.
+4: Restores both files from the earliest available helper backup.
+5: Saves local diagnostics without changing game settings.
 
 Only Engine.ini and GameUserSettings.ini are edited. Existing unrelated keys
 are preserved. Every application backs up both originals first; missing files

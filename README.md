@@ -8,13 +8,41 @@ features, guarantee playable performance, or replace lighting data that the game
 does not provide. Demonologist currently lists a GTX 1060 6 GB as its minimum
 graphics card.
 
+## MX130 2 GB: dark rooms after applying profiles
+
+There is **no verified permanent lighting fix for the MX130** in this project.
+Do not use Lumen off as a repair for dark rooms. It can remove the indirect
+lighting those rooms need. The current Epic documentation lists a GTX 1070 or
+higher for software Lumen; the MX130 is below that supported target. This alone
+does not prove the cause of a particular rendering problem.
+
+Download the updated ZIP, close the game, and choose **4 — Recover EARLIEST
+backup**. This restores settings from before the first available helper backup,
+even if you applied both profiles repeatedly. It cannot recover backups that
+were deleted and does not guarantee those original settings had working lighting.
+Current settings are preserved separately in `MX-Recovery-Snapshots` first.
+
+Record then remove custom Steam launch options for a test with the game's
+default renderer. Launch and check the same room with a flashlight. If it stays
+dark, use **5 — Diagnostic report** and share the resulting text file along with
+the game version and previous launch options. The report is saved locally in the
+config folder; nothing is uploaded. It lists installed adapters, selected INI
+values and available renderer lines from the latest game log. Adapter detection
+alone does not identify the GPU actually used by the game.
+
+If the game cannot provide correct lighting on this hardware, a lasting solution
+requires a developer-supported lighting fallback or a computer that meets the
+game's requirements. An INI file cannot create missing baked lighting or upgrade
+the GPU.
+
 ## Download and use
 
 1. Download [`Demonologist-MX.zip`](./Demonologist-MX.zip).
 2. Extract the entire ZIP to a normal folder.
 3. Launch Demonologist once, then close it completely.
 4. Double-click `Run.cmd`.
-5. Start with option **1 — Software Lumen**.
+5. For MX130 darkness after previous tweaks, choose **4**. Otherwise option
+   **1 — Software Lumen** is an experimental performance/lighting tradeoff.
 6. Launch the game normally through Steam and test the same map and room.
 
 If performance remains poor, try 1280 × 720 in the game's display settings.
@@ -22,13 +50,17 @@ Do not run the helper while the game is open.
 
 ## Modes
 
-- **Software Lumen:** keeps indirect lighting, disables hardware ray tracing and
+- **Software Lumen:** requests indirect lighting, disables Lumen hardware tracing and
   Lumen reflections, lowers other graphics settings, requests 70% render scale,
   and caps the game at 30 FPS.
 - **Lumen off:** disables Lumen global illumination too. This can improve
   performance, but rooms may become too dark or incorrectly lit.
 - **Restore:** restores both configuration files from the backup made before the
   most recent application.
+- **Recover earliest backup:** restores both files from the earliest available
+  helper backup, undoing successive profiles.
+- **Diagnostic report:** records configuration and available GPU/renderer details
+  without changing settings.
 
 The helper edits only `Engine.ini` and `GameUserSettings.ini` in the game's local
 configuration folder. It preserves unrelated settings and creates a backup
