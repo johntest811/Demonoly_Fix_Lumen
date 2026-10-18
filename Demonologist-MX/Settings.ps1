@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('Menu','SoftwareLumen','LumenOff','Restore','RestoreOriginal','Diagnose')][string]$Action = 'Menu',
+    [ValidateSet('Menu','SoftwareLumen','LumenOff','Restore','RestoreOriginal','Diagnose','Snapshot','Compare')][string]$Action = 'Menu',
     [string]$ConfigPath
 )
 $ErrorActionPreference = 'Stop'
@@ -43,7 +43,7 @@ function Read-Ini([string]$Path) {
 }
 
 try {
-    Write-Host 'Demonologist MX settings helper v1.1 - experimental, reversible' -ForegroundColor Cyan
+    Write-Host 'Demonologist MX settings helper v1.2 - experimental, reversible' -ForegroundColor Cyan
     Write-Host 'Close the game before applying or restoring. No administrator rights needed.'
     Write-Host 'MX130 2 GB: no verified lighting fix. For dark rooms after tweaks, use 4 first.' -ForegroundColor Yellow
 
@@ -52,7 +52,8 @@ try {
             foreach ($game in @('Demonologist','Shivers')) {
                 foreach ($platform in @('Windows','WindowsNoEditor')) {
                     $p = Join-Path $env:LOCALAPPDATA "$game\Saved\Config\$platform"
-                    if (Test-Path -LiteralPath (Join-Path $p 'GameUserSettings.ini')) { $p }
+                    if ((Test-Path -LiteralPath (Join-Path $p 'GameUserSettings.ini')) -or
+                        (Test-Path -LiteralPath (Join-Path $p 'MX-ConfigBaseline.json'))) { $p }
                 }
             }
         )
@@ -67,9 +68,7 @@ try {
     $ConfigPath = (Resolve-Path -LiteralPath $ConfigPath).Path
     $userFile = Join-Path $ConfigPath 'GameUserSettings.ini'
     $engineFile = Join-Path $ConfigPath 'Engine.ini'
-    if (-not (Test-Path -LiteralPath $userFile -PathType Leaf)) {
-        throw 'GameUserSettings.ini was not found. Launch the game once, exit, and try again.'
-    }
+    $baselineFile = Join-Path $ConfigPath 'MX-ConfigBaseline.json'
     Write-Host "Settings folder: $ConfigPath"
     if ($Action -eq 'Menu') {
         Write-Host '1 - Try software Lumen: preserve indirect lighting, lower other costs'
@@ -77,6 +76,8 @@ try {
         Write-Host '3 - Restore settings from before the most recent application'
         Write-Host '4 - Recover EARLIEST backup (undo successive helper profiles)'
         Write-Host '5 - Save a local diagnostic report (no settings changes)'
+        Write-Host '6 - Record current files BEFORE launching the game'
+        Write-Host '7 - Check whether files changed AFTER launching the game'
         Write-Host 'Q - Exit'
         switch (Read-Host 'Choose') {
             '1' { $Action = 'SoftwareLumen' }
@@ -84,12 +85,58 @@ try {
             '3' { $Action = 'Restore' }
             '4' { $Action = 'RestoreOriginal' }
             '5' { $Action = 'Diagnose' }
+            '6' { $Action = 'Snapshot' }
+            '7' { $Action = 'Compare' }
             default { exit 0 }
         }
     }
+    if ($Action -in @('Snapshot','Compare')) {
+        $state = @(
+            foreach ($file in @($userFile,$engineFile)) {
+                $exists = Test-Path -LiteralPath $file -PathType Leaf
+                [pscustomobject]@{
+                    Name = [IO.Path]::GetFileName($file)
+                    Exists = $exists
+                    Hash = if ($exists) { (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash } else { '' }
+                }
+            }
+        )
+        if ($Action -eq 'Snapshot') {
+            if (@(Get-Process -ErrorAction SilentlyContinue | Where-Object {
+                $_.ProcessName -match '^(Demonologist|Shivers)(-|$)'
+            }).Count -gt 0) { throw 'Close the game before recording the before-launch files.' }
+            [IO.File]::WriteAllText($baselineFile, (ConvertTo-Json -InputObject $state))
+            Write-Host 'Baseline recorded. Launch normally, then choose 7 while the game is open.' -ForegroundColor Green
+            Write-Host 'Choose 7 again after exiting. Do not choose 6 again between comparisons.'
+            exit 0
+        }
+        if (-not (Test-Path -LiteralPath $baselineFile -PathType Leaf)) {
+            throw 'No baseline found. With the game closed, choose 6 before the next test launch.'
+        }
+        $before = ConvertFrom-Json -InputObject ([IO.File]::ReadAllText($baselineFile))
+        $lines = [System.Collections.Generic.List[string]]::new()
+        $lines.Add('Configuration comparison v1.2 - ' + (Get-Date -Format s))
+        foreach ($item in $state) {
+            $old = @($before | Where-Object { $_.Name -eq $item.Name })
+            if ($old.Count -ne 1) { throw 'Invalid baseline. Record a new baseline with option 6.' }
+            $status = if ($old[0].Exists -and -not $item.Exists) { 'MISSING now (present at baseline)' }
+                elseif (-not $old[0].Exists -and $item.Exists) { 'CREATED since baseline' }
+                elseif (-not $item.Exists) { 'ABSENT both times' }
+                elseif ($old[0].Hash -eq $item.Hash) { 'UNCHANGED contents' }
+                else { 'CHANGED contents (may include normal settings saves)' }
+            $lines.Add($item.Name + ': ' + $status)
+        }
+        $lines.Add('This compares two points in time; it cannot identify the process responsible,')
+        $lines.Add('detect temporary deletion followed by identical recreation, or prove settings were loaded.')
+        $resultFile = Join-Path $ConfigPath ('MX-Comparison-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff') + '.txt')
+        [IO.File]::WriteAllLines($resultFile, $lines)
+        $lines | ForEach-Object { Write-Host $_ }
+        Write-Host "Report saved: $resultFile"
+        exit 0
+    }
     if ($Action -eq 'Diagnose') {
         $report = [System.Collections.Generic.List[string]]::new()
-        $report.Add('Demonologist helper v1.1 diagnostics - ' + (Get-Date -Format s))
+        $report.Add('Demonologist helper v1.2 diagnostics - ' + (Get-Date -Format s))
         $report.Add('This report cannot confirm working Lumen or diagnose darkness from hardware alone.')
         $report.Add('Detected display adapters (presence does not prove the game uses this adapter):')
         try {
@@ -129,6 +176,9 @@ try {
     if (@(Get-Process -ErrorAction SilentlyContinue | Where-Object {
         $_.ProcessName -match '^(Demonologist|Shivers)(-|$)'
     }).Count -gt 0) { throw 'The game appears to be running. Close it and try again.' }
+    if ($Action -in @('SoftwareLumen','LumenOff') -and -not (Test-Path -LiteralPath $userFile -PathType Leaf)) {
+        throw 'GameUserSettings.ini was not found. Launch the game once, exit, and try again.'
+    }
     foreach ($file in @($userFile,$engineFile)) {
         if ((Test-Path -LiteralPath $file) -and (Get-Item -LiteralPath $file).IsReadOnly) {
             throw "File is read-only: $file. Remove the read-only attribute before trying again."

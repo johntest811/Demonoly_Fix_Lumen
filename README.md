@@ -37,6 +37,29 @@ the GPU.
 
 ## Download and use
 
+### Suspected settings deletion or reset (v1.2)
+
+The helper edits `Engine.ini` and `GameUserSettings.ini`; it does not install a
+separate game profile. To check what happens to these files:
+
+1. Close the game and choose **6** to record the current files.
+2. Launch through Steam normally. With the game still open, run the helper again
+   and choose **7**.
+3. Exit the game and choose **7** again. Do not choose 6 between checks.
+4. Share both comparison reports and the option 5 diagnostic report.
+
+The reports distinguish missing files, changed contents and unchanged contents.
+They cannot identify the process responsible or prove that the game loaded the
+settings. Normal saves can change file contents too. Option 6 replaces the
+comparison baseline only; neither option edits game settings. If testing an
+applied profile, record the baseline after applying it and before launching.
+
+Unreal can save user settings automatically; Steam Cloud can sync files selected
+by the developer. We have not established which, if either, is responsible in
+this game. Keeping an INI file on disk does not establish working Lumen support.
+
+### Running a profile
+
 1. Download [`Demonologist-MX.zip`](./Demonologist-MX.zip).
 2. Extract the entire ZIP to a normal folder.
 3. Launch Demonologist once, then close it completely.

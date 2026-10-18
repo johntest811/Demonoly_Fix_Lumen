@@ -1,5 +1,18 @@
 DEMONOLOGIST MX SETTINGS HELPER
 
+VERSION 1.2 - CHECK FOR FILE DELETION / REWRITES
+Close the game and choose 6 to record the current INI file contents by hash.
+Launch the game, then run the helper and choose 7 while the game is still open.
+Exit the game and choose 7 again. Do NOT choose 6 again between comparisons.
+Send both comparison text files and the option 5 report for troubleshooting.
+If checking an applied profile, choose 6 AFTER applying it, BEFORE launch.
+Options 6 and 7 never edit game settings. Option 6 replaces only the baseline.
+The check distinguishes missing files, changed contents and unchanged contents.
+It cannot identify which process changed a file, detect identical recreation,
+or prove that the game loaded a setting. Normal game saves can change INI files.
+Diagnostics and comparison still work if GameUserSettings.ini goes missing.
+The helper edits two INI files; it does not create a separate in-game profile.
+
 VERSION 1.1 - MX130 DARK-ROOM RECOVERY
 There is no verified permanent lighting fix for the MX130 2 GB in this tool.
 Do not use option 2 to fix dark rooms: disabling Lumen can remove needed lighting.
