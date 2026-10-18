@@ -3,6 +3,14 @@
 An unofficial, reversible Windows settings helper for trying to run
 **Demonologist** on older NVIDIA MX-series laptop graphics cards.
 
+For an experimental **ReShade visibility workaround**, download
+[Demonologist-ReShade-Visibility.zip](./Demonologist-ReShade-Visibility.zip).
+It includes normal and stronger brightness presets using only SweetFX's
+LiftGammaGain effect, plus [installation instructions](./ReShade-Presets/READ-ME.txt).
+ReShade and SweetFX must already be installed. These presets brighten existing
+image detail; they cannot restore missing lighting. They have not been tested
+in Demonologist on an MX130.
+
 This is an experimental configuration workaround. It cannot add missing GPU
 features, guarantee playable performance, or replace lighting data that the game
 does not provide. Demonologist currently lists a GTX 1060 6 GB as its minimum

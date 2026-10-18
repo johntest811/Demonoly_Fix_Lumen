@@ -1,0 +1,50 @@
+DEMONOLOGIST - MX130 VISIBILITY PRESETS
+
+These are ReShade brightness presets, not an engine lighting repair.
+They brighten image detail that the game already renders. Pixels that are
+completely black remain black. Missing lighting or surface detail cannot be
+reconstructed by these presets. In-game results on MX130 are unverified.
+
+REQUIRES
+ReShade installed for Shivers-Win64-Shipping.exe with DirectX 10/11/12 selected,
+and the Standard effects and SweetFX by CeeJay.dk packages installed.
+The presets do not contain ReShade, shaders or DLL files.
+
+INSTALL / USE
+1. Extract this ZIP. Copy the two Demonologist-MX130-Visibility INI files to:
+   <Steam library>\steamapps\common\Demonologist\Shivers\Binaries\Win64
+   This is the folder containing Shivers-Win64-Shipping.exe.
+   If files with the same names already exist, keep your copies or rename these.
+   Do not overwrite Engine.ini, GameUserSettings.ini or ReShade.ini.
+2. Launch Demonologist through Steam.
+3. Press Home (or Fn + Home) to open ReShade. Complete or skip its tutorial.
+4. Use the preset selector at the top of ReShade's Home tab to browse to
+   Demonologist-MX130-Visibility.ini and select it.
+5. Check that LiftGammaGain is enabled and that other effects are disabled.
+   Start with this normal preset; it sets RGB Gamma to 1.50 for all channels.
+6. If still too dark, select Demonologist-MX130-Visibility-Strong.ini instead.
+   That sets RGB Gamma to 2.00. It can make menus and brighter scenes washed out.
+7. Compare the same room with LiftGammaGain checked and unchecked.
+
+If no ReShade banner/menu appears, the preset cannot take effect: ReShade must
+first load into the game. If LiftGammaGain is missing or reports a compile error,
+rerun the official installer, select the same game executable, choose Update
+ReShade and effects, and install SweetFX by CeeJay.dk plus Standard effects.
+
+If the picture changes but no more scene detail becomes visible, stop increasing
+brightness. That result does not establish a repair for the game's lighting.
+The shader uses one image-processing pass and no depth-based effects. Actual
+performance cost depends on resolution and hardware; no FPS guarantee is made.
+
+UNDO
+Select your previous preset or uncheck LiftGammaGain. You may remove these two
+INI files when they are no longer selected. Nothing changes Unreal configuration,
+Steam launch options, or savegames. ReShade may save edits back into the selected
+preset, so keep the downloaded originals if you want to reset these settings.
+
+VALIDATION
+Preset effect/uniform names and value ranges were checked against the author's
+shader source. Both files use only LiftGammaGain, neutral Lift/Gain and equal
+RGB values. This checks preset contents, not successful loading or game lighting.
+https://github.com/CeeJayDK/SweetFX/blob/master/Shaders/SweetFX/LiftGammaGain.fx
+Official ReShade: https://reshade.me/
